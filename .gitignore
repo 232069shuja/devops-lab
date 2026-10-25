@@ -1,0 +1,20 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Node / Angular
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+.angular/
+
+# Logs & temp files
+*.log
+lab_manual_text.txt
+paper_text.txt
+.vscode/

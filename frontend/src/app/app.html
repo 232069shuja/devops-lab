@@ -1,0 +1,159 @@
+<div class="page-container">
+  <!-- Top Navigation Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="brand">
+        <span class="brand-badge">ML Full-Stack CI/CD</span>
+        <h1 id="app-title">Toxic Comment & Bias Classification Dashboard</h1>
+        <p class="subtitle">
+          End-to-end Machine Learning System &bull; Jigsaw Unintended Bias in Toxicity &bull; Khan (2023)
+        </p>
+      </div>
+      <div class="system-status">
+        <span class="status-indicator" [class.online]="!isStaticDeployment" [class.static]="isStaticDeployment"></span>
+        <span class="status-text">{{ isStaticDeployment ? 'GitHub Pages Static Demo' : 'Local Dev (Proxy Active)' }}</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- GitHub Pages Notice Banner -->
+  @if (isStaticDeployment) {
+    <div class="deployment-banner" role="alert">
+      <div class="banner-icon">ℹ️</div>
+      <div class="banner-content">
+        <strong>Static GitHub Pages Demonstration</strong>
+        <p>Local Flask backend required for live inference. To execute predictions with the trained scikit-learn model bundle, run the Flask backend and Angular dev server locally.</p>
+      </div>
+    </div>
+  }
+
+  <main class="dashboard-grid">
+    <!-- Input Card -->
+    <section class="card input-card">
+      <div class="card-header">
+        <h2>Model Inference Input</h2>
+        <span class="feature-count">{{ fields.length }} Feature: comment_text</span>
+      </div>
+
+      <!-- Preset Sample Buttons -->
+      <div class="preset-section">
+        <span class="preset-label">Quick Test Presets:</span>
+        <div class="preset-buttons">
+          @for (preset of samplePresets; track preset.title) {
+            <button
+              type="button"
+              class="preset-btn"
+              (click)="loadPreset(preset)">
+              {{ preset.title }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <form (ngSubmit)="submit()" class="inference-form">
+        @for (field of fields; track field.name) {
+          <div class="form-group">
+            <label [for]="field.name">{{ field.label }} <span class="required">*</span></label>
+            <textarea
+              [id]="field.name"
+              [name]="field.name"
+              rows="4"
+              [(ngModel)]="values[field.name]"
+              [placeholder]="field.placeholder || 'Enter input text...'"
+              required></textarea>
+            <span class="input-hint">The comment is preprocessed (lowercased, vectorized with TF-IDF) before classification.</span>
+          </div>
+        }
+
+        <div class="form-actions">
+          <button
+            type="submit"
+            id="predict-submit-btn"
+            class="submit-btn"
+            [disabled]="loading || isStaticDeployment">
+            @if (loading) {
+              <span class="spinner"></span> Running Pipeline...
+            } @else {
+              Run Local Prediction
+            }
+          </button>
+          <button type="button" class="reset-btn" (click)="resetForm()">Reset</button>
+        </div>
+      </form>
+
+      @if (error) {
+        <div class="alert-box error-alert" role="alert">
+          <strong>Notice:</strong> {{ error }}
+        </div>
+      }
+    </section>
+
+    <!-- Prediction Results Card -->
+    <section class="card result-card">
+      <div class="card-header">
+        <h2>Inference Output & Probabilities</h2>
+      </div>
+
+      @if (result) {
+        <div class="result-details">
+          <div class="prediction-badge-container">
+            <span class="badge-label">Predicted Class:</span>
+            <span
+              class="prediction-badge"
+              [class.badge-toxic]="result.prediction === 1"
+              [class.badge-clean]="result.prediction === 0">
+              {{ result.label || (result.prediction === 1 ? 'Toxic' : 'Non-Toxic') }}
+            </span>
+          </div>
+
+          @if (result.probabilities && result.probabilities.length >= 2) {
+            <div class="prob-section">
+              <h3>Class Probabilities</h3>
+              <div class="prob-bar-container">
+                <div class="prob-info">
+                  <span>Non-Toxic Probability</span>
+                  <strong>{{ (result.probabilities[0] * 100).toFixed(1) }}%</strong>
+                </div>
+                <div class="progress-track">
+                  <div
+                    class="progress-fill fill-clean"
+                    [style.width.%]="result.probabilities[0] * 100"></div>
+                </div>
+              </div>
+
+              <div class="prob-bar-container">
+                <div class="prob-info">
+                  <span>Toxic Probability</span>
+                  <strong>{{ (result.probabilities[1] * 100).toFixed(1) }}%</strong>
+                </div>
+                <div class="progress-track">
+                  <div
+                    class="progress-fill fill-toxic"
+                    [style.width.%]="result.probabilities[1] * 100"></div>
+                </div>
+              </div>
+            </div>
+          }
+
+          <div class="metadata-box">
+            <p><strong>Task:</strong> {{ result.task }}</p>
+            <p class="disclaimer"><em>{{ result.disclaimer }}</em></p>
+          </div>
+        </div>
+      } @else {
+        <div class="empty-result-state">
+          <div class="empty-icon">📊</div>
+          <h3>Awaiting Prediction Request</h3>
+          <p>Select a sample preset or enter text on the left, then click <strong>Run Local Prediction</strong> to trigger the Flask REST API and fitted model pipeline.</p>
+        </div>
+      }
+
+      <div class="methodology-card">
+        <h3>Research Methodology Reference</h3>
+        <p><strong>Paper:</strong> Khan (2023) - UMBC Department of Information Systems</p>
+        <p><strong>Architecture:</strong> End-to-end TF-IDF Vectorizer + Balanced Logistic Regression</p>
+        <p><strong>Objective:</strong> High toxicity detection accuracy while reducing false-positive unintended bias against demographic identity terms.</p>
+      </div>
+    </section>
+  </main>
+</div>
